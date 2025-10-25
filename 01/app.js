@@ -6,9 +6,11 @@ function getProductList() {
 }
 
 function getTotalPrice(productList) {
-    return productList.reduce( (product, acc) => {
-        return acc + (product.price * product.count);
-    });
+    const total = productList.reduce((acc, product) => {
+        const lineTotal = product.price * (1 - product.discount) * product.count;
+        return acc + lineTotal;
+    }, 0);
+    return Number(total.toFixed(2));
 }
 
 const totalPrice = getTotalPrice( getProductList() );
