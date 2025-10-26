@@ -9,3 +9,12 @@ test('zwracana liczba mieści się w przedziale', () => {
     expect(result).toBeGreaterThanOrEqual(1);
     expect(result).toBeLessThanOrEqual(10);
 });
+
+
+test('rzuca błąd, jeśli argumenty nie są liczbami', () => {
+    expect(() => randomNumber('a', 5)).toThrow('Argumenty muszą być liczbami');
+});
+
+test('rzuca błąd, jeśli min > max', () => {
+    expect(() => randomNumber(10, 5)).toThrow('Niepoprawny zakres');
+});
