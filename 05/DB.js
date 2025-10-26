@@ -5,50 +5,47 @@ export default class DB {
 
     insert(data) {
         return new Promise((resolve, reject) => {
-            if(data.id) {
-                if(typeof data.id !== 'number') {
-                    this.async(reject,'ID can be only number!');
-                    return null; // stop function
-                } else if(this._rows.some(item => item.id === data.id)) {
-                    this.async(reject, 'ID can\'t be duplicated!');
-                    return null; // stop function
+            if (data.id) {
+                if (typeof data.id !== 'number') {
+                    this._simulateAsync(reject, 'ID can be only number!');
+                    return;
+                } else if (this._rows.some(item => item.id === data.id)) {
+                    this._simulateAsync(reject, "ID can't be duplicated!");
+                    return;
                 }
             }
 
-            this.async(() => {
-                if(!data.id) {
-                    data.id = this._rows.reduce((acc, item) => {
-                        return acc <= item.id ? item.id + 1 : acc;
-                    }, 1);
+            this._simulateAsync(() => {
+                if (!data.id) {
+                    const maxId = this._rows.length > 0
+                        ? Math.max(...this._rows.map(item => item.id))
+                        : 0;
+                    data.id = maxId + 1;
                 }
 
                 this._rows.push(data);
-                resolve(data)
-            }); 
+                resolve(data);
+            });
         });
     }
 
     select(id) {
         return new Promise((resolve, reject) => {
-            this.async(() => {
-                const [row = null] = this._rows.filter(item => item.id === id);
-                if(row) {
-                    resolve(row);
-                } else {
-                    reject('ID not found');
-                }
+            this._simulateAsync(() => {
+                const row = this._rows.find(item => item.id === id);
+                row ? resolve(row) : reject('ID not found');
             });
         });
     }
 
     remove(id) {
         return new Promise((resolve, reject) => {
-            this.async(() => {
-                const lengthBeforeFilter = this._rows.length;
+            this._simulateAsync(() => {
+                const lengthBefore = this._rows.length;
                 this._rows = this._rows.filter(item => item.id !== id);
-                const lengthAfterFilter = this._rows.length;
-                
-                if(lengthBeforeFilter === lengthAfterFilter) {
+                const lengthAfter = this._rows.length;
+
+                if (lengthBefore === lengthAfter) {
                     reject('Item not exist!');
                 } else {
                     resolve('Item was remove!');
@@ -59,25 +56,20 @@ export default class DB {
 
     update(data) {
         return new Promise((resolve, reject) => {
-            if(!data.id) {
-                this.async(reject, 'ID have to be set!');
+            if (!data.id) {
+                this._simulateAsync(reject, 'ID have to be set!');
             } else {
-                this.async(() => {
+                this._simulateAsync(() => {
                     let updated = null;
                     this._rows = this._rows.map(item => {
-                        if(item.id === data.id) {
-                            updated = data
+                        if (item.id === data.id) {
+                            updated = { ...item, ...data };
                             return updated;
                         }
-            
                         return item;
                     });
 
-                    if(updated) {
-                        resolve(updated);
-                    } else {
-                        reject('ID not found!');   
-                    }
+                    updated ? resolve(updated) : reject('ID not found!');
                 });
             }
         });
@@ -85,25 +77,20 @@ export default class DB {
 
     truncate() {
         return new Promise(resolve => {
-            this.async(() => {
+            this._simulateAsync(() => {
                 this._rows = [];
                 resolve(true);
             });
-            
-        })
+        });
     }
 
     getRows() {
         return new Promise(resolve => {
-            this.async(() => {
-                resolve(this._rows);
-            });
-        })
+            this._simulateAsync(() => resolve(this._rows));
+        });
     }
 
-    async(callback, ...params) {
-        setTimeout(() => {
-            callback(...params);
-        }, Math.random() * 100);
+    _simulateAsync(callback, ...params) {
+        setTimeout(() => callback(...params), Math.random() * 100);
     }
 }
